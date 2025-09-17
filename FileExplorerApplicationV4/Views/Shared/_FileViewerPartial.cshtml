@@ -1,0 +1,40 @@
+﻿<div id="file-viewer">
+
+    <div id="open-file-details" class="p-3 mb-2 bg-info-subtle text-dark rounded" style="display:none;">
+        <div class="file-detail-item">
+            <strong>File:</strong>
+            <span id="open-file-name" class="text-truncate" style="max-width: 250px;"></span>
+        </div>
+        <div class="file-detail-item">
+            <strong>Type:</strong>
+            <span id="open-file-type"></span>
+        </div>
+        <div class="file-detail-item">
+            <strong>Size:</strong>
+            <span id="open-file-size"></span>
+        </div>
+        <div class="file-detail-item">
+            <strong>Path:</strong>
+            <span id="open-file-path" class="text-truncate" style="max-width: 400px;"></span>
+        </div>
+    </div>
+
+    <div class="file-actions-bar d-flex justify-content-between align-items-center mb-2">
+        <span id="tag-details" class="text-muted">Ln 1, Col 1</span>
+        <div class="viewer-buttons">
+            <button id="back-to-files-btn" class="btn btn-primary btn-sm" title="Back to File List">
+                <i class="bi bi-arrow-left-circle-fill"></i> Back to Files
+            </button>
+            <button id="copy-document" class="btn btn-outline-secondary btn-sm" title="Copy entire document content"><i class="bi bi-clipboard"></i> Copy Document</button>
+            <button id="copy-tag" class="btn btn-outline-secondary btn-sm" title="Copy selected text"><i class="bi bi-clipboard-plus"></i> Copy Tag</button>
+            <button id="copy-address" class="btn btn-outline-secondary btn-sm" title="Copy file path"><i class="bi bi-folder-symlink"></i> Copy Address</button>
+            <button id="copy-path" class="btn btn-outline-secondary btn-sm" title="Copy XML Path for selected tag"><i class="bi bi-signpost-split"></i> Copy Path</button>
+        </div>
+    </div>
+
+    <div id="viewer-content-wrapper">
+        <textarea id="viewer-content"></textarea>
+        <div id="pdf-image-viewer" style="display:none; height: 600px; width:100%;"></div>
+    </div>
+
+</div>

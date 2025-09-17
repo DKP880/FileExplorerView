@@ -1,0 +1,97 @@
+[
+  {
+    "Username": "TNP2",
+    "PasswordHash": "$2a$11$lJTFq/sa7p0Zico3XwRRF.1Hoy4GAMDcFuuoka5RwYK6irCCNmujG",
+    "Explorers": [
+      {
+        "Provider": "Local",
+        "ExplorerName": "MyFileExplorer36",
+        "RootPaths": [
+          "C:\\MyFileExplorer",
+          "C:\\Windows",
+          "C:\\MyFileExplorer2",
+          "C:\\MyFileExplorer3",
+          "C:\\Users\\Yashwant\\Documents\\JavaScript Project",
+          "C:\\\\sfl",
+          "C:\\Users\\Yashwant\\Documents\\ASP.NET Project"
+        ],
+        "Host": null,
+        "Port": null,
+        "Username": null,
+        "Password": null,
+        "RemoteDir": null,
+        "Type": null,
+        "LastUsed": null
+      },
+      {
+        "Provider": "FTP",
+        "ExplorerName": null,
+        "RootPaths": null,
+        "Host": "ftp.dlptest.com",
+        "Port": 21,
+        "Username": "dlpuser",
+        "Password": "rNrKYTX9g7z3RgJRmxWuGHbeu",
+        "RemoteDir": "/",
+        "Type": "ftp",
+        "LastUsed": "2025-09-08T10:23:02.2144206Z"
+      },
+      {
+        "Provider": "FTP",
+        "ExplorerName": null,
+        "RootPaths": null,
+        "Host": "google.com",
+        "Port": 21,
+        "Username": "name",
+        "Password": "rNrKYTX9g7z3RgJRmxWuGHbeu",
+        "RemoteDir": "/",
+        "Type": "ftp",
+        "LastUsed": "2025-09-08T10:23:02.2144206Z"
+      },
+      {
+        "Provider": "SFTP",
+        "ExplorerName": null,
+        "RootPaths": null,
+        "Host": "test.rebex.net",
+        "Port": 22,
+        "Username": "demo",
+        "Password": "password",
+        "RemoteDir": "/",
+        "Type": "sftp",
+        "LastUsed": "2025-09-10T07:58:55.4258895Z"
+      }
+    ]
+  },
+  {
+    "Username": "TNP3",
+    "PasswordHash": "$2a$11$lJTFq/sa7p0Zico3XwRRF.1Hoy4GAMDcFuuoka5RwYK6irCCNmujG",
+    "Explorers": [
+      {
+        "Provider": "Local",
+        "ExplorerName": "MyFileExplorer36",
+        "RootPaths": [
+          "C:\\Program Files",
+          "C:\\Program Files (x86)"
+        ],
+        "Host": null,
+        "Port": null,
+        "Username": null,
+        "Password": null,
+        "RemoteDir": null,
+        "Type": null,
+        "LastUsed": null
+      },
+      {
+        "Provider": "FTP",
+        "ExplorerName": null,
+        "RootPaths": null,
+        "Host": "ftp.dlptest.com",
+        "Port": 21,
+        "Username": "dlpuser",
+        "Password": "rNrKYTX9g7z3RgJRmxWuGHbeu",
+        "RemoteDir": "/",
+        "Type": "ftp",
+        "LastUsed": "2025-09-08T10:23:02.2144206Z"
+      }
+    ]
+  }
+]

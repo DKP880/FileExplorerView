@@ -1,0 +1,156 @@
+﻿@model FileExplorer.Models.User
+@{
+    ViewData["Title"] = "File Explorer";
+    var allowedExtensions = new[] { ".xml", ".json", ".txt", ".pdf", ".jpeg", ".jpg", ".png" };
+}
+
+<div class="row g-0">
+    <!-- Sidebar -->
+    <nav class="col-md-3 col-lg-2 bg-light sidebar">
+        <div class="sidebar-sticky pt-3">
+            <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                <span>Local Drives</span>
+                <button class="btn btn-sm" id="add-file-btn" title="Add Virtual File">
+                    <i class="bi bi-plus-circle-fill"></i>
+                </button>
+            </h6>
+            <ul class="nav flex-column">
+                @foreach (var explorer in Model.Explorers.Where(e => e.Provider == "Local"))
+                {
+                    if (explorer.RootPaths != null)
+                    {
+                        foreach (var path in explorer.RootPaths)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link local-path d-flex justify-content-between align-items-center" href="#" data-path="@path" title="@path">
+
+                                    @if (System.IO.Directory.Exists(path))
+                                    {
+                                        var fileCount = 0;
+                                        try
+                                        {
+                                            var dirInfo = new System.IO.DirectoryInfo(path);
+                                            fileCount = dirInfo.GetFiles().Count(f => allowedExtensions.Contains(f.Extension.ToLowerInvariant()));
+                                        }
+                                        catch (UnauthorizedAccessException) { /* Can't access, count remains 0 */ }
+
+                                        <span class="text-truncate" style="min-width: 0;">
+                                            <i class="bi bi-hdd-fill me-2"></i>
+                                            @System.IO.Path.GetFileName(path.TrimEnd('\\')) (@path)
+                                        </span>
+                                        <span class="badge bg-secondary rounded-pill ms-2">@fileCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-truncate" style="min-width: 0;">
+                                            <i class="bi bi-file-earmark-text-fill me-2"></i>
+                                            @System.IO.Path.GetFileName(path.TrimEnd('\\')) (@path)
+                                        </span>
+                                    }
+                                </a>
+                            </li>
+                        }
+                    }
+                }
+            </ul>
+
+            <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                <span>Remote Connections</span>
+            </h6>
+            <div class="px-2">
+                @foreach (var explorer in Model.Explorers.Where(e => e.Provider == "FTP" || e.Provider == "SFTP"))
+                {
+                    <div class="card connection-card remote-path my-2"
+                         data-provider="@explorer.Provider"
+                         data-host="@explorer.Host"
+                         data-username="@explorer.Username"
+                         data-password="@explorer.Password"
+                         data-remotedir="@explorer.RemoteDir">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                @if (explorer.Provider == "FTP")
+                                {
+                                    <i class="bi bi-server"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-lock-fill"></i>
+                                }
+                                @explorer.Provider
+                            </h6>
+                            <p class="card-text" title="@explorer.Username@@@explorer.Host">@explorer.Username@@@explorer.Host</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="col-md-9 col-lg-10 ms-sm-auto px-md-4">
+        <div id="file-list-container">
+            <div class="text-center p-5 text-muted">Select a path or connection to begin.</div>
+        </div>
+        <div id="file-viewer-container" class="mt-4" style="display:none;">
+            @await Html.PartialAsync("_FileViewerPartial")
+        </div>
+        <main class="col-md-9 col-lg-10 ms-sm-auto px-md-4">
+            <div id="editor-tooltip-target"></div>        
+    </main>
+</div>
+
+
+<div class="modal fade" id="addFileModal" tabindex="-1" aria-labelledby="addFileModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addFileModalLabel">Add Virtual File Path</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addFileForm">
+                    <div class="mb-3">
+                        <label for="modal-filePath" class="form-label">Full Path to File</label>
+                        <input type="text" class="form-control" id="modal-filePath" placeholder="C:\Users\YourUser\Documents\report.pdf">
+                        <div class="form-text">Paste the full, absolute path of the local file you want to add.</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveVirtualFile">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 3. FTP/SFTP Credentials Modal -->
+<div class="modal fade" id="credentialsModal" tabindex="-1" aria-labelledby="credentialsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="credentialsModalLabel">Enter Credentials</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="credentialsForm">
+                    <input type="hidden" id="modal-provider" />
+                    <input type="hidden" id="modal-host" />
+                    <input type="hidden" id="modal-remoteDir" />
+                    <div class="mb-3">
+                        <label for="modal-username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="modal-username">
+                    </div>
+                    <div class="mb-3">
+                        <label for="modal-password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="modal-password">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="submitCredentials">Connect</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,42 @@
+﻿@model IEnumerable<FileExplorer.Models.FileViewModel>
+
+<h4 class="mb-3">Files</h4>
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Name</th>
+                <th>Size (KB)</th>
+                <th>Last Modified</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="4" class="text-center">No supported files found in this directory.</td>
+                </tr>
+            }
+            @foreach (var file in Model)
+            {
+                <tr class="clickable-row">
+                    <td>@file.Name</td>
+                    <td>@((file.Size / 1024.0).ToString("N2")) KB</td>
+                    <td>@file.LastModified.ToString("g")</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm view-file-btn"
+                                data-provider="@file.Provider"
+                                data-fullpath="@file.FullPath"
+                                data-host="@file.Host"
+                                data-username="@file.FtpUsername"
+                                data-password="@file.FtpPassword"
+                                data-size="@file.Size">
+                            View
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

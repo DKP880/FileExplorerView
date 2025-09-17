@@ -1,0 +1,313 @@
+﻿@* @{
+    ViewData["Title"] = "File Explorer";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var virtualFolders = ViewBag.VirtualFolders as List<FileExplorerApplicationV4.Models.VirtualFolder>
+                         ?? new List<FileExplorerApplicationV4.Models.VirtualFolder>();
+
+    var ftpCredentials = ViewBag.FtpCredentials as List<FileExplorerApplicationV4.Models.FtpCredential>
+                         ?? new List<FileExplorerApplicationV4.Models.FtpCredential>();
+}
+
+<!-- Top Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand d-flex align-items-center" href="#">
+            <i class="fas fa-folder me-2"></i> File Explorer
+        </a>
+        <div class="ms-auto d-flex align-items-center">
+            <span class="navbar-text text-light me-3">
+                <i class="fas fa-user-circle me-1"></i>
+                Welcome, @User.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value
+            </span>
+            <a class="nav-link text-light me-2" href="#"><i class="fas fa-home me-1"></i>Home</a>
+            <a class="nav-link text-light me-2" href="#"><i class="fas fa-th-list me-1"></i>Explorer View</a>
+            <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
+                <button type="submit" class="btn btn-danger btn-sm">
+                    <i class="fas fa-sign-out-alt me-1"></i> Logout
+                </button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<!-- Secondary Navigation -->
+<div class="secondary-nav bg-light py-2">
+    <div class="container-fluid d-flex align-items-center">
+        <div class="fw-bold">
+            <i class="fas fa-folder-open me-2"></i> File Explorer
+        </div>
+        <div class="ms-auto d-flex align-items-center">
+            <button class="btn btn-success btn-sm me-2" id="localModeBtn">
+                <i class="fas fa-check-circle me-1"></i> LOCAL
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-outline-dark btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    Mode
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="switchMode('local')">Local</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="switchMode('ftp')">FTP</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="switchMode('sftp')">SFTP</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Explorer Layout -->
+<div class="explorer-container d-flex">
+    <!-- Sidebar -->
+    <div class="sidebar p-3 border-end">
+        <!-- Local Explorer -->
+        <div class="mb-3">
+            <div class="fw-bold mb-2" data-bs-toggle="collapse" data-bs-target="#localExplorer">
+                <i class="fas fa-folder me-2 text-success"></i> Local Explorer
+            </div>
+            <div id="localExplorer" class="collapse show">
+                <button class="btn btn-outline-primary btn-sm mb-2 w-100" data-bs-toggle="modal" data-bs-target="#addFolderModal">
+                    <i class="fas fa-plus me-1"></i> Add Folder
+                </button>
+                <div id="localFolders">
+                    @foreach (var folder in virtualFolders)
+                    {
+                        <div class="folder-item" data-folder-id="@folder.Id" onclick="loadLocalFolder('@folder.Id')">
+                            <i class="fas fa-folder me-2"></i>@folder.Name
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- FTP Explorer -->
+        <div class="mb-3">
+            <div class="fw-bold mb-2" data-bs-toggle="collapse" data-bs-target="#ftpExplorer">
+                <i class="fas fa-server me-2 text-warning"></i> FTP Explorer
+            </div>
+            <div id="ftpExplorer" class="collapse">
+                <button class="btn btn-outline-warning btn-sm mb-2 w-100" data-bs-toggle="modal" data-bs-target="#addFtpModal">
+                    <i class="fas fa-plus me-1"></i> Add FTP
+                </button>
+                <div id="ftpConnections">
+                    @foreach (var credential in ftpCredentials.Where(c => c.ConnectionType.ToUpper() == "FTP"))
+                    {
+                        <div class="connection-item" data-credential-id="@credential.Id" onclick="loadRemoteConnection('@credential.Id')">
+                            <i class="fas fa-server me-2"></i>
+                            <div>
+                                <div class="fw-bold">@credential.Name</div>
+                                <small class="text-muted">@credential.Host:@credential.Port</small>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- SFTP Explorer -->
+        <div>
+            <div class="fw-bold mb-2" data-bs-toggle="collapse" data-bs-target="#sftpExplorer">
+                <i class="fas fa-shield-alt me-2 text-info"></i> SFTP Explorer
+            </div>
+            <div id="sftpExplorer" class="collapse">
+                <button class="btn btn-outline-info btn-sm mb-2 w-100" data-bs-toggle="modal" data-bs-target="#addSftpModal">
+                    <i class="fas fa-plus me-1"></i> Add SFTP
+                </button>
+                <div id="sftpConnections">
+                    @foreach (var credential in ftpCredentials.Where(c => c.ConnectionType.ToUpper() == "SFTP"))
+                    {
+                        <div class="connection-item" data-credential-id="@credential.Id" onclick="loadRemoteConnection('@credential.Id')">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            <div>
+                                <div class="fw-bold">@credential.Name</div>
+                                <small class="text-muted">@credential.Host:@credential.Port</small>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content flex-fill p-3">
+        <!-- File List View -->
+        <div id="fileListView" class="content-view active border rounded p-3">
+            <div class="text-center text-muted py-5">
+                <i class="fas fa-arrow-left fa-3x mb-3"></i>
+                <h5>Select a folder to view its contents</h5>
+            </div>
+        </div>
+
+        <!-- File Content View -->
+        <div id="fileContentView" class="content-view border rounded p-3">
+            <div class="d-flex justify-content-between mb-2">
+                <span class="fw-bold">Tag Details:</span>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary" onclick="copyDocument()"><i class="fas fa-copy me-1"></i> Copy Document</button>
+                    <button class="btn btn-outline-secondary" onclick="copySelectedTag()"><i class="fas fa-tag me-1"></i> Copy Tag(s)</button>
+                    <button class="btn btn-outline-secondary" onclick="copyFileAddress()"><i class="fas fa-warning me-1"></i> File Address</button>
+                    <button class="btn btn-outline-secondary" onclick="copyXmlPath()"><i class="fas fa-warning me-1"></i> Copy Path</button>
+                </div>
+            </div>
+            <pre><code id="codeContent" class="language-xml"></code></pre>
+        </div>
+    </div>
+</div>
+
+<!-- Add Folder Modal -->
+<div class="modal fade" id="addFolderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="addFolderForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Local Folder</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Folder Name</label>
+                        <input type="text" class="form-control" id="folderName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Directory Path</label>
+                        <input type="text" class="form-control" id="folderPath" placeholder="C:\Users\YourUser\Documents" required>
+                        <div class="form-text">Enter the full path to the directory you want to add.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Folder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add FTP Modal -->
+<div class="modal fade" id="addFtpModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="addFtpForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add FTP Connection</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Connection Name</label>
+                        <input type="text" class="form-control" id="ftpName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Host</label>
+                        <input type="text" class="form-control" id="ftpHost" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Port</label>
+                        <input type="number" class="form-control" id="ftpPort" value="21" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-control" id="ftpUsername" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" id="ftpPassword" required>
+                    </div>
+                    <input type="hidden" id="ftpConnectionType" value="FTP">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Add FTP Connection</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add SFTP Modal -->
+<div class="modal fade" id="addSftpModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="addSftpForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add SFTP Connection</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Connection Name</label>
+                        <input type="text" class="form-control" id="sftpName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Host</label>
+                        <input type="text" class="form-control" id="sftpHost" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Port</label>
+                        <input type="number" class="form-control" id="sftpPort" value="22" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-control" id="sftpUsername" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" id="sftpPassword" required>
+                    </div>
+                    <input type="hidden" id="sftpConnectionType" value="SFTP">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info">Add SFTP Connection</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div> *@
+@* <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - FileExplorer</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/material-darker.min.css">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-area="" asp-controller="Explorer" asp-action="Index">FileExplorer</a>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-end">
+                    <ul class="navbar-nav">
+                        @if (Context.Session.GetString("Username") != null)
+                        {
+                            <li class="nav-item">
+                                <span class="navbar-text me-3">Welcome, @Context.Session.GetString("Username")</span>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-controller="Account" asp-action="Logout">Logout</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container-fluid">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html> *@
